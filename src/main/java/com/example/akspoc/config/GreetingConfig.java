@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @Setter
 @Configuration
-@ConfigurationProperties(prefix = "mail")
+@ConfigurationProperties(prefix = "greeting")
 public class GreetingConfig {
     private String name;
 }

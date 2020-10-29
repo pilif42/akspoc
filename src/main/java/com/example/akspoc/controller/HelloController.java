@@ -18,7 +18,7 @@ public class HelloController {
     @GetMapping("/greeting")
     public GreetingDto greeting() {
         GreetingDto greetingDto = new GreetingDto();
-        greetingDto.setMsg(format("Hello %", greetingConfig.getName()));
+        greetingDto.setMsg(format("Hello %s", greetingConfig.getName()));
         greetingDto.setTime(Instant.now());
         return greetingDto;
     }
