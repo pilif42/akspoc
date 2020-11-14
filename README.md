@@ -35,14 +35,16 @@ mvn clean install
     - curl -sL https://packages.microsoft.com/keys/microsoft.asc |
           gpg --dearmor |
           sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
-    - AZ_REPO=$(lsb_release -cs)
-      echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" |
-          sudo tee /etc/apt/sources.list.d/azure-cli.list
-    - TODO - still to run when groovy appears at https://packages.microsoft.com/repos/azure-cli/dists/ (I raised https://github.com/Azure/azure-cli/issues/15828):
-           - sudo apt-get update
-           - sudo apt-get install azure-cli
-           - az login
-           - etc.
+    - work around as at the time, there was no package for Ubuntu Groovy Gorilla (see https://github.com/Azure/azure-cli/issues/15828):
+            - AZ_REPO=focal
+            - echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+            - sudo apt-get update
+            - sudo apt-get install azure-cli
+            - az login
+                - it opens a browser and loads an Azure sign-in page.
+    - az --version
+            - azure-cli 2.14.2 so all good as the tutorial says 2.0.53 or later.
+- start at https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-prepare-acr#create-an-azure-container-registry
     
 
 # TODO:
