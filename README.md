@@ -29,22 +29,39 @@ mvn clean install
     
 # To deploy the Docker image to an Azure Container Registry (https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-prepare-acr)
 - install the Azure CLI following https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-apt:
-    - sudo apt remove azure-cli -y && sudo apt autoremove -y
-    - sudo apt-get update
-    - sudo apt-get install ca-certificates curl apt-transport-https lsb-release gnupg
-    - curl -sL https://packages.microsoft.com/keys/microsoft.asc |
-          gpg --dearmor |
-          sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
-    - work around as at the time, there was no package for Ubuntu Groovy Gorilla (see https://github.com/Azure/azure-cli/issues/15828):
-            - AZ_REPO=focal
-            - echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
-            - sudo apt-get update
-            - sudo apt-get install azure-cli
-            - az login
-                - it opens a browser and loads an Azure sign-in page.
-    - az --version
-            - azure-cli 2.14.2 so all good as the tutorial says 2.0.53 or later.
-- start at https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-prepare-acr#create-an-azure-container-registry
+        - sudo apt remove azure-cli -y && sudo apt autoremove -y
+        - sudo apt-get update
+        - sudo apt-get install ca-certificates curl apt-transport-https lsb-release gnupg
+        - curl -sL https://packages.microsoft.com/keys/microsoft.asc |
+              gpg --dearmor |
+              sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+        - workaround as, at the time, there was no package for Ubuntu Groovy Gorilla (see https://github.com/Azure/azure-cli/issues/15828):
+                - AZ_REPO=focal
+                - echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+                - sudo apt-get update
+                - sudo apt-get install azure-cli
+                - az login
+                    - it opens a browser and loads an Azure sign-in page.
+        - az --version
+                - azure-cli 2.14.2 so all good as the tutorial says 2.0.53 or later.
+- create an Azure Container Registry:
+        - prerequisite: I had to create an Azure account.
+        - in a terminal window:
+                - az login
+                - az group create --name myResourceGroup --location uksouth
+                - az acr create --resource-group myResourceGroup --name myACR --sku Basic
+- log into the Azure Container Registry:
+        - az acr login -n myACR --expose-token
+        - sudo docker login myACR.azurecr.io -u myUsername -p theToken
+        - TODO current issue: Get https://myACR.azurecr.io/v2/: unauthorized: Application not registered with AAD.
+                - Solution at https://docs.microsoft.com/en-us/azure/container-registry/container-registry-troubleshoot-login
+        
+        - Also tried:
+            - sudo az acr login --name myACR
+            - Failing with:
+                - Unable to get AAD authorization tokens with message: Please run 'az login' to setup account.
+                  Unable to get admin user credentials with message: Please run 'az login' to setup account.
+                  Error response from daemon: Get https://myACR.azurecr.io/v2/: unauthorized: Application not registered with AAD.
     
 
 # TODO:
