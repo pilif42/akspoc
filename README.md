@@ -78,20 +78,32 @@ mvn clean install
 
 
 # Deploy an Azure Kubernetes Service (AKS) cluster (https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-deploy-cluster)
-- if you choose to use a service principal (NOT recommended):
-        - as we do not specify a service principal in the below cmd, one is automatically created. It is granted the right to pull images from the Azure Container Registry (ACR) created in the previous step.
-        - az aks create --resource-group myResourceGroup --name myAKSCluster --node-count 2 --generate-ssh-keys --attach-acr myACR
-- if you choose to use a managed identity (recommended option for easier management):
-        - az aks create -g myResourceGroup -n myManagedCluster --enable-managed-identity
-        - TODO Currently failing with:
-        BadRequestError: Operation failed with status: 'Bad Request'. Details: Provisioning of resource(s) for container service myManagedCluster in resource group myRG failed. 
-        Message: Operation could not be completed as it results in exceeding approved Total Regional Cores quota. Additional details - Deployment Model: Resource Manager, 
-        Location: uksouth, Current Limit: 4, Current Usage: 0, Additional Required: 6, (Minimum) New Limit Required: 6. Submit a request for Quota increase at 
-        https://aka.ms/ProdportalCRP/?#create/Microsoft.Support/Parameters/%7B%22subId%22:%2211913e2a-0c78-4eed-a6b8-98065785110f%22,%22pesId%22:%2206bfd9d3-516b-d5c6-5802-169c800dec89%22,%22supportTopicId%22:%22e12e3d1d-7fa0-af33-c6d0-3c50df9658a3%22%7D 
-        by specifying parameters listed in the ‘Details’ section for deployment to succeed. 
-        Please read more about quota limits at https://docs.microsoft.com/en-us/azure/azure-supportability/regional-quota-requests.. Details: 
+- create a Kubernetes cluster:
+        - if you choose to use a service principal (NOT recommended but followed for now as the recommended version gives me an error):
+                - as we do not specify a service principal in the below cmd, one is automatically created. It is granted the right to pull images from the Azure Container Registry (ACR) created in the previous step.
+                - az aks create --resource-group myResourceGroup --name myAKSCluster --node-count 2 --generate-ssh-keys --attach-acr myACR
+                        - after a while, we get a JSON response.
+        - if you choose to use a managed identity (recommended option for easier management):
+                - az aks create -g myResourceGroup -n myManagedCluster --enable-managed-identity
+                - TODO Currently failing with:
+                BadRequestError: Operation failed with status: 'Bad Request'. Details: Provisioning of resource(s) for container service myManagedCluster in resource group myRG failed. 
+                Message: Operation could not be completed as it results in exceeding approved Total Regional Cores quota. Additional details - Deployment Model: Resource Manager, 
+                Location: uksouth, Current Limit: 4, Current Usage: 0, Additional Required: 6, (Minimum) New Limit Required: 6. Submit a request for Quota increase at 
+                https://aka.ms/ProdportalCRP/?#create/Microsoft.Support/Parameters/%7B%22subId%22:%2211913e2a-0c78-4eed-a6b8-98065785110f%22,%22pesId%22:%2206bfd9d3-516b-d5c6-5802-169c800dec89%22,%22supportTopicId%22:%22e12e3d1d-7fa0-af33-c6d0-3c50df9658a3%22%7D 
+                by specifying parameters listed in the ‘Details’ section for deployment to succeed. 
+                Please read more about quota limits at https://docs.microsoft.com/en-us/azure/azure-supportability/regional-quota-requests.. Details: 
+- install the Kubernetes CLI:
+        - sudo az aks install-cli
+                Downloading client to "/usr/local/bin/kubectl" from "https://storage.googleapis.com/kubernetes-release/release/v1.19.4/bin/linux/amd64/kubectl"
+                Please ensure that /usr/local/bin is in your search PATH, so the `kubectl` command can be found.
+                Downloading client to "/tmp/tmpzyhc6lqs/kubelogin.zip" from "https://github.com/Azure/kubelogin/releases/download/v0.0.7/kubelogin.zip"
+                Please ensure that /usr/local/bin is in your search PATH, so the `kubelogin` command can be found.
+        - TODO: start here -> /usr/local/bin is in your search PATH?
+- connect to cluster using kubectl:
+        - az aks get-credentials --resource-group myResourceGroup --name myAKSCluster
         
-
+        
 # TODO:
 - Is using an access key for the ACR the best way forward? -> see 'prerequisite' under 'log into the Azure Container Registry' in the notes above.
+- try to create an AKS cluster with a managed identity -> see current error above.
 - https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-prepare-app
