@@ -51,18 +51,37 @@ mvn clean install
                 - az group create --name myResourceGroup --location uksouth
                 - az acr create --resource-group myResourceGroup --name myACR --sku Basic
 - log into the Azure Container Registry:
-        - az acr login -n myACR --expose-token
-        - sudo docker login myACR.azurecr.io -u myUsername -p theToken
-        - TODO current issue: Get https://myACR.azurecr.io/v2/: unauthorized: Application not registered with AAD.
-                - Solution at https://docs.microsoft.com/en-us/azure/container-registry/container-registry-troubleshoot-login
-        
-        - Also tried:
-            - sudo az acr login --name myACR
-            - Failing with:
-                - Unable to get AAD authorization tokens with message: Please run 'az login' to setup account.
-                  Unable to get admin user credentials with message: Please run 'az login' to setup account.
-                  Error response from daemon: Get https://myACR.azurecr.io/v2/: unauthorized: Application not registered with AAD.
-    
+        - prerequisite:
+            - in the Portal UI, select myResourceGroup and then myACR
+            - Settings -> Access keys & Activate
+        - sudo az acr login --name myACR
+            - username & pwd = the ones obtained in the prerequisite
+- tag a container image:
+        - sudo docker images -> list of your current local images.
+        - az acr list --resource-group myResourceGroup --query "[].{acrLoginServer:loginServer}" --output table
+                AcrLoginServer
+                ----------------
+                myACR.azurecr.io
+        - sudo docker tag akspoc:0.0.1-SNAPSHOT myACR.azurecr.io/akspoc:0.0.1-SNAPSHOT
+        - sudo docker images -> to verify the tag has been applied
+- push images to registry:
+        - sudo docker push myACR.azurecr.io/akspoc:0.0.1-SNAPSHOT
+- list images in registry:
+        - az acr repository list --name myACR --output table
+                Result
+                --------
+                akspoc
+        - az acr repository show-tags --name myACR --repository akspoc --output table
+                Result
+                --------------
+                0.0.1-SNAPSHOT
+
+
+# Deploy an Azure Kubernetes Service (AKS) cluster (https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-deploy-cluster)
+
+
+
 
 # TODO:
-https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-prepare-app
+- Is using an access key for the ACR the best way forward?
+- https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-prepare-app
