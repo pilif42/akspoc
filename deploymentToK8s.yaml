@@ -20,5 +20,9 @@ spec:
       containers:
       - image: pbpoc.azurecr.io/akspoc:0.0.1-SNAPSHOT
         name: akspoc
-        resources: {}
+        resources:
+          requests:
+            cpu: 250m
+          limits:
+            cpu: 500m
 status: {}

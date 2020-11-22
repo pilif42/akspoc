@@ -1,0 +1,29 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: akspoc-hpa
+spec:
+  maxReplicas: 3 # define max replica count
+  minReplicas: 1  # define min replica count
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: akspoc
+  targetCPUUtilizationPercentage: 50 # target CPU utilization
+
+#You can define the behaviour for all your deployments in the same file. See what has been commented out below.
+
+#---
+#
+#apiVersion: autoscaling/v1
+#kind: HorizontalPodAutoscaler
+#metadata:
+#  name: azure-vote-front-hpa
+#spec:
+#  maxReplicas: 10 # define max replica count
+#  minReplicas: 3  # define min replica count
+#  scaleTargetRef:
+#    apiVersion: apps/v1
+#    kind: Deployment
+#    name: azure-vote-front
+#  targetCPUUtilizationPercentage: 50 # target CPU utilization

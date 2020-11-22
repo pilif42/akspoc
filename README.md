@@ -114,11 +114,19 @@ mvn clean install
 
 
 # Deploy an application in my (AKS) cluster (https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-deploy-application)
-- Clean up if you want to redeploy from scratch:
+- Clean up if you want to redeploy from scratch / limit Azure charges when not in use:
         - kubectl delete service akspoc
         - kubectl delete deployment akspoc
 - Deploy the application:
         - kubectl create deployment akspoc --image=pbpoc.azurecr.io/akspoc:0.0.1-SNAPSHOT --dry-run=client -o=yaml > deploymentToK8s.yaml
+        - manual edit to add some CPU requests and limits:
+                - I used as an example: https://github.com/Azure-Samples/azure-voting-app-redis/blob/master/azure-vote-all-in-one-redis.yaml
+                - replace L23 = resources: {} with the below:
+                        resources:
+                          requests:
+                            cpu: 250m
+                          limits:
+                            cpu: 500m
         - kubectl apply -f deploymentToK8s.yaml
                 - deployment.apps/akspoc created
         - kubectl expose deployment akspoc --type=LoadBalancer --port=8080 --dry-run=client -o=yaml > expose.yaml
@@ -130,20 +138,48 @@ mvn clean install
                   akspoc   LoadBalancer   XXX           YYY            8080:32517/TCP   41s
         - curl -k -v -H "Accept:application/hal+json" -H "Accept-Language:en-US" -H "Cache-Control:no-store" -X GET 'http://EXTERNAL-IP:8080/greeting'
                 - 200 {"msg":"Hello prod","time":"2020-11-22T10:58:35.981061Z"}
-- To view the status of your containers:
-        - kubectl get pods
-                - NAME                      READY   STATUS    RESTARTS   AGE
-                akspoc-...                  1/1     Running   0          6m16s
 
 
 # Scale applications in Azure Kubernetes Service (https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-scale)
+- Manually scale pods:
+        - To see the number and state of pods in your cluster: kubectl get pods
+                NAME                      READY     STATUS    RESTARTS   AGE
+                akspoc-...                 1/1     Running   0          37m
+        - To increase the number of pods to 2 for akspoc: kubectl scale --replicas=2 deployment/akspoc
+                - kubectl get pods -> now shows 2 pods.
+        - To decrease the number of pods back down to 1 for akspoc: kubectl scale --replicas=1 deployment/akspoc
+- Autoscale pods:
+        - az aks show --resource-group myResourceGroup --name myAKSCluster --query kubernetesVersion --output table        
+                - Result
+                --------
+                1.18.10 -> The Metrics Server is used to provide resource utilization to Kubernetes, and is automatically deployed in AKS clusters versions 1.10 and higher.
+        - To use the autoscaler, all containers in your pods and your pods must have CPU requests and limits defined:
+                - see the manual edit in 'Deploy the application' above.
+        - To autoscale the number of pods. If average CPU utilization across all pods exceeds 50% of their requested usage, the autoscaler increases the pods up to a maximum of 3 instances. A minimum of 1 instances is defined for the deployment:
+                - kubectl autoscale deployment akspoc --cpu-percent=50 --min=1 --max=3
+                        - horizontalpodautoscaler.autoscaling/akspoc autoscaled
+                - An alternative to the cmd above is to define a manifest file. See autoscalerBehaviour.yaml.
+                        - kubectl apply -f autoscalerBehaviour.yaml
+        - To see the status of the autoscaler: kubectl get hpa
+                - NAME         REFERENCE           TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
+                akspoc       Deployment/akspoc   1%/50%    1         3         1          5m53s
+                akspoc-hpa   Deployment/akspoc   1%/50%    1         3         1          47s
+- Manually scale AKS nodes:
+        - to increase from our initial 2 nodes to 3: az aks scale --resource-group myResourceGroup --name myAKSCluster --node-count 3
+  
+ 
+# Update an application in Azure Kubernetes Service (AKS) (https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-app-update)
+- TODO Start here: make sure that 0.0.1-SNAPSHOT is running in AKS.
+- Update the application code:
+        - in HelloController, change from Hello %s to Hello And Bye %s
+- Update the application version to 0.0.2-SNAPSHOT
+         
 
-
-        
-# TODO:
+# TODOs:
+- Rather than deleting the AKS service & deployment, work out the cmd(s) to stop/start them.
 - So far, we have deployed to K8S using port 8080 and without specifying a Spring profile:
         - try to apply the local profile
         - try to use a different port
+- Add a DB (or another container) in the mix and use docker-compose.
 - Is using an access key for the ACR the best way forward? -> see 'prerequisite' under 'log into the Azure Container Registry' in the notes above.
 - try to create an AKS cluster with a managed identity -> see current error above.
-- https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-prepare-app
