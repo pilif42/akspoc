@@ -7,24 +7,28 @@ mvn clean install
 
 # To run:
 - Run config in IntelliJ:
-    - pointing to AkspocApplication
-    - VM Options = -Dspring.profiles.active=local
+        - pointing to AkspocApplication
+        - VM Options = -Dspring.profiles.active=local
 - Or: mvn clean package spring-boot:run -DskipTests=true -Dspring-boot.run.profiles=local
 
 
 # To test:
 - with curl:
-    - curl -k -v -H "Accept:application/hal+json" -H "Accept-Language:en-US" -H "Cache-Control:no-store" -X GET 'http://localhost:8080/greeting' 
-        - 200 {"msg":"Hello local","time":"2020-10-29T20:07:03.464160Z"}
+        - curl -k -v -H "Accept:application/hal+json" -H "Accept-Language:en-US" -H "Cache-Control:no-store" -X GET 'http://localhost:8080/greeting' 
+            - 200 {"msg":"Hello local","time":"2020-10-29T20:07:03.464160Z"}
 
 
 # To create a Docker image and test it locally
 - to create the image: sudo mvn clean spring-boot:build-image
 - to verify that the image has been built: sudo docker images -> akspoc, 0.0.1-SNAPSHOT
-- to run the image: sudo docker run -e "SPRING_PROFILES_ACTIVE=local" -p 8000:8080 --detach --name akspoc -t akspoc:0.0.1-SNAPSHOT
-    - we will reach the container on 8000 (see curl cmd below). The request will be forwarded to the app's port on 8080.
-- to test the image: curl -k -v -H "Accept:application/hal+json" -H "Accept-Language:en-US" -H "Cache-Control:no-store" -X GET 'http://localhost:8000/greeting'
-    - 200 {"msg":"Hello local","time":"2020-10-29T20:16:53.758937Z"}
+- to run the image: sudo docker run -e "SPRING_PROFILES_ACTIVE=local" -p 8080:8080 --detach --name akspoc -t akspoc:0.0.1-SNAPSHOT
+        - we will reach the container on 8080, first port after the -p (see curl cmd below).
+        - The request will be forwarded to the app's port on 8080, second port after the :.
+        - if the image is already running:
+                - sudo docker stop akspoc
+                - sudo docker rm akspoc
+- to test the image: curl -k -v -H "Accept:application/hal+json" -H "Accept-Language:en-US" -H "Cache-Control:no-store" -X GET 'http://localhost:8080/greeting'
+        - 200 {"msg":"Hello local","time":"2020-11-22T10:48:45.542553Z"}
     
     
 # To deploy the Docker image to an Azure Container Registry (https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-prepare-acr)
@@ -94,16 +98,52 @@ mvn clean install
                 Please read more about quota limits at https://docs.microsoft.com/en-us/azure/azure-supportability/regional-quota-requests.. Details: 
 - install the Kubernetes CLI:
         - sudo az aks install-cli
-                Downloading client to "/usr/local/bin/kubectl" from "https://storage.googleapis.com/kubernetes-release/release/v1.19.4/bin/linux/amd64/kubectl"
+                - Downloading client to "/usr/local/bin/kubectl" from "https://storage.googleapis.com/kubernetes-release/release/v1.19.4/bin/linux/amd64/kubectl"
                 Please ensure that /usr/local/bin is in your search PATH, so the `kubectl` command can be found.
                 Downloading client to "/tmp/tmpzyhc6lqs/kubelogin.zip" from "https://github.com/Azure/kubelogin/releases/download/v0.0.7/kubelogin.zip"
                 Please ensure that /usr/local/bin is in your search PATH, so the `kubelogin` command can be found.
-        - TODO: start here -> /usr/local/bin is in your search PATH?
+        - echo $PATH
+                - confirms that /usr/local/bin is in my search PATH.
 - connect to cluster using kubectl:
         - az aks get-credentials --resource-group myResourceGroup --name myAKSCluster
-        
+                - Merged "myAKSCluster" as current context in /home/philippe/.kube/config
+        - To verify the connection to your cluster, run 'kubectl get nodes' to return a list of the cluster nodes:
+                - NAME                                STATUS   ROLES   AGE   VERSION
+                  aks-nodepool1-39371405-vmss000000   Ready    agent   20h   v1.18.10
+                  aks-nodepool1-39371405-vmss000001   Ready    agent   20h   v1.18.10
+
+
+# Deploy an application in my (AKS) cluster (https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-deploy-application)
+- Clean up if you want to redeploy from scratch:
+        - kubectl delete service akspoc
+        - kubectl delete deployment akspoc
+- Deploy the application:
+        - kubectl create deployment akspoc --image=pbpoc.azurecr.io/akspoc:0.0.1-SNAPSHOT --dry-run=client -o=yaml > deploymentToK8s.yaml
+        - kubectl apply -f deploymentToK8s.yaml
+                - deployment.apps/akspoc created
+        - kubectl expose deployment akspoc --type=LoadBalancer --port=8080 --dry-run=client -o=yaml > expose.yaml
+        - kubectl apply -f expose.yaml
+                - service/akspoc created
+- Test the application:
+        - To reveal the EXTERNAL-IP: kubectl get service akspoc --watch
+                - NAME     TYPE           CLUSTER-IP    EXTERNAL-IP    PORT(S)          AGE
+                  akspoc   LoadBalancer   XXX           YYY            8080:32517/TCP   41s
+        - curl -k -v -H "Accept:application/hal+json" -H "Accept-Language:en-US" -H "Cache-Control:no-store" -X GET 'http://EXTERNAL-IP:8080/greeting'
+                - 200 {"msg":"Hello prod","time":"2020-11-22T10:58:35.981061Z"}
+- To view the status of your containers:
+        - kubectl get pods
+                - NAME                      READY   STATUS    RESTARTS   AGE
+                akspoc-...                  1/1     Running   0          6m16s
+
+
+# Scale applications in Azure Kubernetes Service (https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-scale)
+
+
         
 # TODO:
+- So far, we have deployed to K8S using port 8080 and without specifying a Spring profile:
+        - try to apply the local profile
+        - try to use a different port
 - Is using an access key for the ACR the best way forward? -> see 'prerequisite' under 'log into the Azure Container Registry' in the notes above.
 - try to create an AKS cluster with a managed identity -> see current error above.
 - https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-prepare-app
