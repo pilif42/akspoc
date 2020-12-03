@@ -14,7 +14,7 @@ mvn clean install
 
 # To test:
 - with curl:
-        - curl -k -v -H "Accept:application/hal+json" -H "Accept-Language:en-US" -H "Cache-Control:no-store" -X GET 'http://localhost:8080/greeting' 
+        - curl -k -v -H "Accept:application/hal+json" -H "Accept-Language:en-US" -H "Cache-Control:no-store" -X GET 'http://localhost:8080/greeting'
             - 200 {"msg":"Hello local","time":"2020-10-29T20:07:03.464160Z"}
 
 
@@ -29,8 +29,8 @@ mvn clean install
                 - sudo docker rm akspoc
 - to test the image: curl -k -v -H "Accept:application/hal+json" -H "Accept-Language:en-US" -H "Cache-Control:no-store" -X GET 'http://localhost:8080/greeting'
         - 200 {"msg":"Hello local","time":"2020-11-22T10:48:45.542553Z"}
-    
-    
+
+
 # To deploy the Docker image to an Azure Container Registry (https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-prepare-acr)
 - install the Azure CLI following https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-apt:
         - sudo apt remove azure-cli -y && sudo apt autoremove -y
@@ -90,12 +90,12 @@ mvn clean install
         - if you choose to use a managed identity (recommended option for easier management):
                 - az aks create -g myResourceGroup -n myManagedCluster --enable-managed-identity
                 - TODO Currently failing with:
-                BadRequestError: Operation failed with status: 'Bad Request'. Details: Provisioning of resource(s) for container service myManagedCluster in resource group myRG failed. 
-                Message: Operation could not be completed as it results in exceeding approved Total Regional Cores quota. Additional details - Deployment Model: Resource Manager, 
-                Location: uksouth, Current Limit: 4, Current Usage: 0, Additional Required: 6, (Minimum) New Limit Required: 6. Submit a request for Quota increase at 
-                https://aka.ms/ProdportalCRP/?#create/Microsoft.Support/Parameters/%7B%22subId%22:%2211913e2a-0c78-4eed-a6b8-98065785110f%22,%22pesId%22:%2206bfd9d3-516b-d5c6-5802-169c800dec89%22,%22supportTopicId%22:%22e12e3d1d-7fa0-af33-c6d0-3c50df9658a3%22%7D 
-                by specifying parameters listed in the ‘Details’ section for deployment to succeed. 
-                Please read more about quota limits at https://docs.microsoft.com/en-us/azure/azure-supportability/regional-quota-requests.. Details: 
+                BadRequestError: Operation failed with status: 'Bad Request'. Details: Provisioning of resource(s) for container service myManagedCluster in resource group myRG failed.
+                Message: Operation could not be completed as it results in exceeding approved Total Regional Cores quota. Additional details - Deployment Model: Resource Manager,
+                Location: uksouth, Current Limit: 4, Current Usage: 0, Additional Required: 6, (Minimum) New Limit Required: 6. Submit a request for Quota increase at
+                https://aka.ms/ProdportalCRP/?#create/Microsoft.Support/Parameters/%7B%22subId%22:%2211913e2a-0c78-4eed-a6b8-98065785110f%22,%22pesId%22:%2206bfd9d3-516b-d5c6-5802-169c800dec89%22,%22supportTopicId%22:%22e12e3d1d-7fa0-af33-c6d0-3c50df9658a3%22%7D
+                by specifying parameters listed in the ‘Details’ section for deployment to succeed.
+                Please read more about quota limits at https://docs.microsoft.com/en-us/azure/azure-supportability/regional-quota-requests.. Details:
 - install the Kubernetes CLI:
         - sudo az aks install-cli
                 - Downloading client to "/usr/local/bin/kubectl" from "https://storage.googleapis.com/kubernetes-release/release/v1.19.4/bin/linux/amd64/kubectl"
@@ -166,17 +166,18 @@ mvn clean install
                 akspoc-hpa   Deployment/akspoc   1%/50%    1         3         1          47s
 - Manually scale AKS nodes:
         - to increase from our initial 2 nodes to 3: az aks scale --resource-group myResourceGroup --name myAKSCluster --node-count 3
-  
- 
+
+
 # Update an application in Azure Kubernetes Service (AKS) (https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-app-update)
 - TODO Start here: make sure that 0.0.1-SNAPSHOT is running in AKS.
 - Update the application code:
         - in HelloController, change from Hello %s to Hello And Bye %s
 - Update the application version to 0.0.2-SNAPSHOT
-         
+
 
 # TODOs:
 - Rather than deleting the AKS service & deployment, work out the cmd(s) to stop/start them.
+- Test my Docker image fully with snyk (Transfer notes from file into here). Attempt to clear some vulnerabilities. 
 - So far, we have deployed to K8S using port 8080 and without specifying a Spring profile:
         - try to apply the local profile
         - try to use a different port
