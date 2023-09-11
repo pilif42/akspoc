@@ -39,53 +39,64 @@ mvn clean install
 
 
 # To deploy the Docker image to an Azure Container Registry (https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-prepare-acr)
-- install the Azure CLI following https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-apt:
-        - sudo apt remove azure-cli -y && sudo apt autoremove -y
-        - sudo apt-get update
-        - sudo apt-get install ca-certificates curl apt-transport-https lsb-release gnupg
-        - curl -sL https://packages.microsoft.com/keys/microsoft.asc |
-              gpg --dearmor |
-              sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
-        - workaround as, at the time, there was no package for Ubuntu Groovy Gorilla (see https://github.com/Azure/azure-cli/issues/15828):
-                - AZ_REPO=focal
-                - echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
-                - sudo apt-get update
-                - sudo apt-get install azure-cli
-                - az login
-                    - it opens a browser and loads an Azure sign-in page.
-        - az --version
-                - azure-cli 2.14.2 so all good as the tutorial says 2.0.53 or later.
-- create an Azure Container Registry:
-        - prerequisite: I had to create an Azure account.
-        - in a terminal window:
-                - az login
-                - az group create --name myResourceGroup --location uksouth
-                - az acr create --resource-group myResourceGroup --name myACR --sku Basic
-- log into the Azure Container Registry:
-        - prerequisite:
-            - in the Portal UI, select myResourceGroup and then myACR
-            - Settings -> Access keys & Activate
-        - sudo az acr login --name myACR
-            - username & pwd = the ones obtained in the prerequisite
-- tag a container image:
-        - sudo docker images -> list of your current local images.
-        - az acr list --resource-group myResourceGroup --query "[].{acrLoginServer:loginServer}" --output table
-                AcrLoginServer
-                ----------------
-                myACR.azurecr.io
-        - sudo docker tag akspoc:0.0.1-SNAPSHOT myACR.azurecr.io/akspoc:0.0.1-SNAPSHOT
-        - sudo docker images -> to verify the tag has been applied
-- push images to registry:
-        - sudo docker push myACR.azurecr.io/akspoc:0.0.1-SNAPSHOT
-- list images in registry:
-        - az acr repository list --name myACR --output table
-                Result
-                --------
-                akspoc
-        - az acr repository show-tags --name myACR --repository akspoc --output table
-                Result
-                --------------
-                0.0.1-SNAPSHOT
+- Install the Azure CLI following https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-apt:
+  - sudo apt remove azure-cli -y && sudo apt autoremove -y
+  - Get packages needed for the installation process:
+    - sudo apt-get update
+    - sudo apt-get install ca-certificates curl apt-transport-https lsb-release gnupg
+  - Download and install the Microsoft signing key:
+    - sudo mkdir -p /etc/apt/keyrings
+    - curl -sLS https://packages.microsoft.com/keys/microsoft.asc |
+      gpg --dearmor |
+      sudo tee /etc/apt/keyrings/microsoft.gpg > /dev/null
+    - sudo chmod go+r /etc/apt/keyrings/microsoft.gpg
+  - Add the Azure CLI software repository:
+    - AZ_REPO=$(lsb_release -cs)
+      - Workaround required as no Azure CLI package available yet for 'lunar'. Instead, I used: AZ_REPO=jammy as Jammy Jellyfish was the latest distribution with an available package.
+    - echo "deb [arch=`dpkg --print-architecture` signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" |
+      sudo tee /etc/apt/sources.list.d/azure-cli.list
+  - Update repository information and install the azure-cli package:
+    - sudo apt-get update
+    - sudo apt-get install azure-cli
+
+- Verify that Azure CLI has been installed successfully:
+  - az --version should show 'azure-cli 2.52.0'.
+
+- Create an Azure Container Registry:
+  - prerequisite: I had to create an Azure account.
+  - in a terminal window:
+    - az login
+    - az group create --name myResourceGroup --location uksouth
+    - az acr create --resource-group myResourceGroup --name myACR --sku Basic
+    
+- Log into the Azure Container Registry:
+  - prerequisite:
+    - in the Portal UI, select myResourceGroup and then myACR
+    - Settings -> Access keys & Activate
+  - az acr login --name myACR
+    - username & pwd = the ones obtained in the prerequisite
+    
+- Tag a container image:
+  - docker images -> list of your current local images.
+  - az acr list --resource-group myResourceGroup --query "[].{acrLoginServer:loginServer}" --output table
+     AcrLoginServer
+     ----------------
+     myACR.azurecr.io
+  - docker tag akspoc:0.0.1-SNAPSHOT myACR.azurecr.io/akspoc:0.0.1-SNAPSHOT
+  - docker images -> to verify the tag has been applied
+  
+- Push images to registry:
+  - docker push myACR.azurecr.io/akspoc:0.0.1-SNAPSHOT
+  
+- List images in registry:
+  - az acr repository list --name myACR --output table
+        Result
+        --------
+        akspoc
+  - az acr repository show-tags --name myACR --repository akspoc --output table
+        Result
+        --------------
+        0.0.1-SNAPSHOT
 
 
 # Deploy an Azure Kubernetes Service (AKS) cluster (https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-deploy-cluster)
