@@ -15,20 +15,27 @@ mvn clean install
 # To test:
 - with curl:
         - curl -k -v -H "Accept:application/hal+json" -H "Accept-Language:en-US" -H "Cache-Control:no-store" -X GET 'http://localhost:8080/greeting'
-            - 200 {"msg":"Hello local","time":"2020-10-29T20:07:03.464160Z"}
+            - 200 {"msg":"Hello local","time":"2023-09-11T13:19:26.241144177Z"}
+
+
+# To clear up my local Docker setup
+- To delete all containers including its volumes use: docker rm -vf $(docker ps -aq)
+- To delete all the images: docker rmi -f $(docker images -aq)
 
 
 # To create a Docker image and test it locally
-- to create the image: sudo mvn clean spring-boot:build-image
-- to verify that the image has been built: sudo docker images -> akspoc, 0.0.1-SNAPSHOT
-- to run the image: sudo docker run -e "SPRING_PROFILES_ACTIVE=local" -p 8080:8080 --detach --name akspoc -t akspoc:0.0.1-SNAPSHOT
-        - we will reach the container on 8080, first port after the -p (see curl cmd below).
+- To create the image: mvn clean spring-boot:build-image
+- To verify that the image has been built: docker images should show 
+  - REPOSITORY = akspoc
+  - TAG = 0.0.1-SNAPSHOT
+- To run the image: docker run -e "SPRING_PROFILES_ACTIVE=local" -p 8080:8080 --detach --name akspoc -t akspoc:0.0.1-SNAPSHOT
+        - We will reach the container on 8080, first port after the -p (see curl cmd below).
         - The request will be forwarded to the app's port on 8080, second port after the :.
-        - if the image is already running:
-                - sudo docker stop akspoc
-                - sudo docker rm akspoc
-- to test the image: curl -k -v -H "Accept:application/hal+json" -H "Accept-Language:en-US" -H "Cache-Control:no-store" -X GET 'http://localhost:8080/greeting'
-        - 200 {"msg":"Hello local","time":"2020-11-22T10:48:45.542553Z"}
+        - If the image is already running:
+                - docker stop akspoc
+                - docker rm akspoc
+- To test the image: curl -k -v -H "Accept:application/hal+json" -H "Accept-Language:en-US" -H "Cache-Control:no-store" -X GET 'http://localhost:8080/greeting'
+        - 200 {"msg":"Hello local","time":"2023-09-11T13:48:23.835323730Z"}
 
 
 # To deploy the Docker image to an Azure Container Registry (https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-prepare-acr)
